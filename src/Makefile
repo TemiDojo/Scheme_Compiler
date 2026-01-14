@@ -2,11 +2,14 @@ CC= gcc
 CFLAGS= -o
 .PHONY: all clean
 
-all: compile
+all: compile interpret
 
 
 compile: compiler.c
 	$(CC) $^ $(CFLAGS) $@
 
+interpret: interpreter.c
+	$(CC) $^ $(CFLAGS) $@
+
 clean:
-	rm -f compile *scm
+	rm -f compile *scm interpret
