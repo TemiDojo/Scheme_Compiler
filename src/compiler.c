@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
 #include "./includes/parser.h"
 #include "./includes/compiler.h"
 #include "./includes/opcodes.h"
@@ -10,51 +13,126 @@
 
 
 
-//struct RetData ret_struct = {0};
-//Int64_Array code_array;
+Parser p;
 
-int main(void) {
-    //const char *scheme_expr = "#\\newline";
-    //const char *scheme_expr = " 42";
-    //const char *scheme_expr = "#t";
-    //const char *scheme_expr = "()";
-    //const char *scheme_expr = "(add1 2)";
-    const char *scheme_expr = "(sub1 4)";
-    //const char *scheme_expr = "(+ a b)";
-    //const char *scheme_expr = "(add1 (sub1 (integer->char 50)))";
-    //const char *scheme_expr = "(+ 1 (add1 (- 4 2)))";
-    //const char *scheme_expr = "(let ((a 2)(b 3)) (let ((a 1)(b 2)) a) (- 2 3) (let ((a 1)(b 2)) a))";
-    //const char *scheme_expr = "(let ((a 2) (b 3)) (+ 2 3) (let ((b 4)) (* b 2)))";
-    //const char *scheme_expr = "(+ 1 (add1 (- 4 2)) 2)";
-    //const char *scheme_expr = "(let ((a 0) (b 1)) (- a b)()) (- 1 2)";
-    //const char *scheme_expr = "()";
+int main(int argc, char **argv) {
 
 
-    global_stackPos = -1;
-    code_array = initializeInt64_arr();
-    Parser p = new_parser(scheme_expr);
-    Expr *parsed = scheme_parse(&p);
-    display_parsed_list(parsed);
-    Env env = initializeEnv();
-    Compiler(parsed, &env);
-    
-    // Write to file
-    FILE *fptr = fopen("test.scm", "w");
+    FILE *fptr = fopen("put.out", "w");
     if (fptr == NULL) {
         printf("File could not be created\n");
         return -1;
     } 
-    fwrite(code_array.code, sizeof(int64_t), code_array.size, fptr);
-    free(code_array.code);
-    free(parsed);
+
+    if (argc == 2) {
+        // then we check if the arg passed is a file
+        char *file_path = argv[1];
+        printf("file name: %s\n", file_path);
+        int fd = open(file_path, O_RDONLY);
+        if (fd < 0) {
+            printf("Failed to open file\n");
+            return -1;
+        }
+        // get file size with fstat
+        struct stat bufstat;
+        int sd = fstat(fd, &bufstat);
+        if (sd < 0) {
+            printf("Failed to fstat file\n");
+            return -1;
+        }
+        int filesize = bufstat.st_size;
+
+        // load the file into memory with mmap
+        char *expr = mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, fd, 0);
+        if (expr == MAP_FAILED) {
+            printf("Failed to mmap file\n");
+            return -1;
+        }
+
+
+
+
+
+        size_t expr_len = strlen(expr);
+
+        Parser p = new_parser(expr);
+        while(p.pos < (expr_len-1)) {
+            puts("new expression");
+            global_stackPos = -1;
+            code_array = initializeInt64_arr();
+
+            printf("expression to parse: %s\n", p.source + p.pos);
+            Expr *parsed = scheme_parse(&p);
+
+            display_parsed_list(parsed);
+
+            Env env = initializeEnv();
+            Compiler(parsed, &env);
+
+            // emit an instruction after each compiled expression
+            // so we interpreter resets the stack
+            add_element(&code_array, DEG);
+
+            fwrite(code_array.code, sizeof(int64_t), code_array.size, fptr);
+            free(code_array.code);
+            free(env.val);
+            printf("updated position is: %d\n", p.pos);
+
+            free(parsed);
+        }
+
+
+    } else {
+    // recieve expr through commmand line
+
+        char *expr = NULL;
+        size_t len = 0;
+        getline(&expr, &len, stdin);
+        
+        Parser p = new_parser(expr);
+        while(p.pos < (strlen(expr)-1)) {
+            puts("new expression");
+            global_stackPos = -1;
+            code_array = initializeInt64_arr();
+
+            printf("expression to parse: %s\n", p.source);
+            Expr *parsed = scheme_parse(&p);
+
+            display_parsed_list(parsed);
+
+            Env env = initializeEnv();
+            Compiler(parsed, &env);
+
+            // emit an instruction after each compiled expression
+            // so we interpreter resets the stack
+            add_element(&code_array, DEG);
+
+            fwrite(code_array.code, sizeof(int64_t), code_array.size, fptr);
+            free(code_array.code);
+            free(env.val);
+            printf("updated position is: %d\n", p.pos);
+
+            
+            free(parsed);
+        }
+
+        free(expr);
+    }
 
     fclose(fptr);
+
+    return 0;
+
    
 
 }
 
 Expr* scheme_parse(Parser *p) {
     skip_whitespace(p);
+
+    if (p->pos >= p->length) {
+        return NULL;  // Nothing left to parse
+    }
 
     char c = peek(p);
     char cN = advanceN(p);
@@ -77,6 +155,10 @@ Expr* scheme_parse(Parser *p) {
         return parse_bool(p);
     } else if (is_symbol_start(c)){
         return parse_symbol(p);
+    } else if (c == ';') {
+        // comments
+        skip_comments(p);
+        return scheme_parse(p);
     } else {
         printf("Error: wrong expression '%c' \n", c);
         exit(1);
@@ -116,9 +198,13 @@ void Compiler(Expr *parsed, Env *env) {
             break;
         case EXPR_SYMBOL:
             int64_t stack_pos = lookup(env, parsed->as.symbol);
-            add_element(&code_array, KLEG);
-            add_element(&code_array, stack_pos);
-            stack_pointer++;
+            if (stack_pos == -1) {
+                printf("Error: unbound variable: %s\n", parsed->as.symbol);
+            } else {
+                add_element(&code_array, KLEG);
+                add_element(&code_array, stack_pos);
+                stack_pointer++;
+            }
             //global_stackPos++;
             break;
         case EXPR_LIST:
@@ -158,7 +244,7 @@ void compile_list(Expr *list, Env *env) {
         compile_char2int(list, env);
     } else if(strcmp(op_name, "null?") == 0) {
         compile_nullp(list, env);
-    } else if(strcmp(op_name, "zerop") == 0) {
+    } else if(strcmp(op_name, "zero?") == 0) {
         compile_zerop(list, env);
     } else if(strcmp(op_name, "not") == 0) {
         compile_not(list, env);
@@ -196,6 +282,8 @@ void compile_add1(Expr *list, Env *env) {
         return;
     }
     Expr *arg = list->as.list.items[1];
+    // check the arg type in here, only compile int
+    // or list expr that will return int
     Compiler(arg, env);
 
     add_element(&code_array, AEG1);
@@ -207,6 +295,8 @@ void compile_sub1(Expr *list, Env *env) {
         return;
     }
     Expr *arg = list->as.list.items[1];
+    // check the arg type in here, only compile int
+    // or list expr that will return int
     Compiler(arg, env);
 
     add_element(&code_array, SEG1);
@@ -218,6 +308,8 @@ void compile_int2char(Expr *list, Env *env){
         return;
     }
     Expr *arg = list->as.list.items[1];
+    // check the type in here only compile int
+    // or list epxr that will return int
     Compiler(arg, env);
 
     add_element(&code_array, IEG);
@@ -229,6 +321,8 @@ void compile_char2int(Expr *list, Env *env) {
         return;
     }
     Expr *arg = list->as.list.items[1];
+    // check the type in here, only compile char
+    // or list expr that will return char
     Compiler(arg, env);
 
     add_element(&code_array, CEG);
@@ -262,6 +356,9 @@ void compile_not(Expr *list, Env *env) {
         return;
     }
     Expr *arg = list->as.list.items[1];
+    // check the arg type in here, only compile int
+    // or list expr that will return int
+    // or a symbol
     Compiler(arg, env);
 
     add_element(&code_array, NEG);
@@ -273,6 +370,8 @@ void compile_intp(Expr *list, Env *env) {
         return;
     }
     Expr *arg = list->as.list.items[1];
+    // check the arg type, only compile int or
+    // list epxr that will return int
     Compiler(arg, env);
     
     add_element(&code_array, sIEG);
@@ -286,7 +385,7 @@ void compile_boolp(Expr *list, Env *env) {
     Expr *arg = list->as.list.items[1];
     Compiler(arg, env);
 
-    add_element(&code_array, sIEG);
+    add_element(&code_array, sBEG);
 }
 
 

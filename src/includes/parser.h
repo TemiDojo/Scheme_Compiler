@@ -16,10 +16,11 @@ typedef struct {
 /*
  * Function Declaration
  */
-Parser new_parser(const char *source);
+Parser new_parser(char *source);
 Expr* scheme_parse(Parser *p);
 struct TypeData *Parse(const char *scheme_expr);
 void skip_whitespace(Parser *p);
+void skip_comments(Parser *p);
 char peek(Parser *p);
 char advance(Parser *p);
 char advanceN(Parser *p);
@@ -33,7 +34,7 @@ Expr* parse_symbol(Parser *p);
 /*
  * Parser Class initialization
  */
-Parser new_parser(const char *source) {
+Parser new_parser(char *source) {
     Parser p;
     p.source = source;
     p.pos = 0;
@@ -64,12 +65,20 @@ char advanceN(Parser *p) {
 void skip_whitespace(Parser *p) {
     while(p->pos < p->length) {
         char c = peek(p);
-        if (c == ' ') {
+        if (c == ' ' || c == '\n' || c == '\t') {
             advance(p);
         } else {
             break;
         }
     }
+}
+
+void skip_comments(Parser *p) {
+    advance(p); // consume ;
+    while(peek(p) != '\n') {
+        advance(p);
+    }
+    advance(p); 
 }
 
 /*
@@ -101,30 +110,24 @@ Expr* parse_number(Parser *p) {
 
 }
 
-
 Expr* parse_char(Parser *p) {
 
     Expr *list_expr = malloc(sizeof(Expr));
     list_expr->type = EXPR_CHAR;
-    char c;
-    const char *op_name = p->source + (p->pos+2);
-    if (peek(p) >= 33 && peek(p) <= 126 && strlen(op_name) == 1) {
-       c = peek(p);
-       list_expr->as.char_val = (int64_t) c;
-       return list_expr;
+    advance(p);
+    advance(p);
+    if (strncmp(p->source + p->pos, "newline", 7) == 0) {
+        list_expr->as.char_val = (int64_t) '\n';
+        p->pos+=7;
+    } else if (strncmp(p->source + p->pos, "space", 5) == 0) {
+        list_expr->as.char_val = (int64_t) ' ';
+        p->pos += 5;
     } else {
-        if (strcmp(op_name, "newline") == 0) {
-            printf("in the newline\n");
-            list_expr->as.char_val = (int64_t) '\n';
-            return list_expr;
-        } else if (strcmp(op_name, "space") == 0) {
-            list_expr->as.char_val = (int64_t) ' ';
-            return list_expr;
-        }
+        char c = advance(p);
+        list_expr->as.char_val = (int64_t) c;
     }
 
-    printf("Error: expected a character\n");
-    exit(1);
+    return list_expr;
 }
 
 
@@ -132,18 +135,18 @@ Expr* parse_bool(Parser *p) {
 
     Expr *list_expr = malloc(sizeof(Expr));
     list_expr->type = EXPR_BOOL;
-    char c = advanceN(p);
+    advance(p);
+    char c = advance(p);
     printf("bool: %c\n", c);
     if (c == 't') {
-        list_expr->as.bool_val = 0;
-        return list_expr;
-    } else if (c == 'f') {
         list_expr->as.bool_val = 1;
-        return list_expr;
+    } else if (c == 'f') {
+        list_expr->as.bool_val = 0;
+    } else {
+        printf("Error: expected a boolean\n");
     }
+    return list_expr;
 
-    printf("Error: expected a boolean \n");
-    exit(1);
 }
 
 Expr* parse_symbol(Parser *p) {
