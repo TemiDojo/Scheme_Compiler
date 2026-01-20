@@ -75,6 +75,7 @@ int main(int argc, char **argv) {
 
             fwrite(code_array.code, sizeof(int64_t), code_array.size, fptr);
             free(code_array.code);
+            free(env.val->symbol);
             free(env.val);
             printf("updated position is: %d\n", p.pos);
             free_expr(parsed);
@@ -109,6 +110,7 @@ int main(int argc, char **argv) {
 
             fwrite(code_array.code, sizeof(int64_t), code_array.size, fptr);
             free(code_array.code);
+            free(env.val->symbol);
             free(env.val);
             printf("updated position is: %d\n", p.pos);
 
@@ -275,6 +277,8 @@ void compile_list(Expr *list, Env *env) {
         Env envnew = initializeEnv();
         puts("1 buck");
         compile_let(list, &envnew);
+        free(envnew.val->symbol);
+        free(envnew.val);
     } else {
         printf("Error: unknown operator '%s'\n", op_name);
         exit(-3);

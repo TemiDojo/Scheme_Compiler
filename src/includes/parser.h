@@ -127,7 +127,12 @@ Expr* parse_char(Parser *p) {
         p->pos += 5;
     } else {
         char c = advance(p);
-        list_expr->as.char_val = (int64_t) c;
+        if (peek(p) == ')' || peek(p) == ';'){
+            list_expr->as.char_val = (int64_t) c;
+        } else {
+            printf("Error: invalid char\n");
+            exit(-1);
+        }
     }
     /*
     if (peek(p) == ';') {
@@ -204,6 +209,9 @@ Expr* parse_expr(Parser *p) {
                 puts("empty list");
             }
             break;
+        } else if (peek(p) == ';') {
+            skip_comments(p);
+            continue;
         }
         puts("running schem_parse");
         printf("... %c\n", peek(p));

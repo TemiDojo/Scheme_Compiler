@@ -7,7 +7,7 @@
 (let ((a 3)) (* 5 a)) ; testing to see
 (* 10 20)
 (let; comment
-    ((a #\f; comments again
+    ((a #\fa; comments again
 
     ))
     a)
