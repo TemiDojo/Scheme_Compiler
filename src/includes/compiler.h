@@ -88,6 +88,7 @@ int64_t lookup(Env *env, char *symbol);
 void add_to_list(ExprList *list, Expr *item);
 void display_parsed_list(Expr *parsed);
 void free_expr(Expr *parsed);
+void free_env(Env *env);
 
 
 Env initializeEnv() {
@@ -242,6 +243,14 @@ void free_expr(Expr *parsed) {
             free(parsed);
             break;
     }
+}
+
+void free_env(Env *env) {
+    for (size_t i = 0; i < env->count; i++) {
+        free(env->val[i].symbol); 
+    }
+    
+    free(env->val);
 }
 
 

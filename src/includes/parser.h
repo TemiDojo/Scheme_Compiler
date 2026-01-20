@@ -7,8 +7,8 @@
 // parser struct
 typedef struct {
     const char *source;
-    int pos;
-    int length;
+    size_t pos;
+    size_t length;
 } Parser;
 
 
@@ -108,7 +108,6 @@ Expr* parse_number(Parser *p) {
         list_expr->as.int_val = -(list_expr->as.int_val);
         return list_expr;
     }
-    printf("%ld\n", list_expr->as.int_val);
     return list_expr;
 
 }
@@ -150,7 +149,6 @@ Expr* parse_bool(Parser *p) {
     list_expr->type = EXPR_BOOL;
     advance(p);
     char c = advance(p);
-    printf("bool: %c\n", c);
     if (c == 't') {
         list_expr->as.bool_val = 1;
     } else if (c == 'f') {
@@ -172,7 +170,6 @@ Expr* parse_symbol(Parser *p) {
     char c = peek(p);
     int i = 0;
     while(c != '\0' && c != ' ' && c != '\n' && c != ')' && c != ';') {
-        printf("%c\n", c); 
         list_expr->as.symbol[i] = c;
         i++;
         advance(p);
@@ -205,16 +202,17 @@ Expr* parse_expr(Parser *p) {
             exit(1);
         } else if (peek(p) == ')') {
             advance(p); // consume ');
+                        /*
             if (list_expr->as.list.count == 0) {
                 puts("empty list");
             }
+            */
             break;
         } else if (peek(p) == ';') {
             skip_comments(p);
             continue;
         }
-        puts("running schem_parse");
-        printf("... %c\n", peek(p));
+
         Expr *item = scheme_parse(p);
         add_to_list(&list_expr->as.list, item);
     }

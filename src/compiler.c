@@ -13,7 +13,6 @@
 
 
 
-Parser p;
 
 int main(int argc, char **argv) {
 
@@ -57,7 +56,6 @@ int main(int argc, char **argv) {
 
         Parser p = new_parser(expr);
         while(p.pos < (expr_len-1)) {
-            puts("new expression");
             global_stackPos = -1;
             code_array = initializeInt64_arr();
 
@@ -75,9 +73,8 @@ int main(int argc, char **argv) {
 
             fwrite(code_array.code, sizeof(int64_t), code_array.size, fptr);
             free(code_array.code);
-            free(env.val->symbol);
-            free(env.val);
-            printf("updated position is: %d\n", p.pos);
+            free_env(&env);
+            printf("updated position is: %ld\n", p.pos);
             free_expr(parsed);
         }
 
@@ -91,7 +88,6 @@ int main(int argc, char **argv) {
         
         Parser p = new_parser(expr);
         while(p.pos < (strlen(expr)-1)) {
-            puts("new expression");
             global_stackPos = -1;
             code_array = initializeInt64_arr();
 
@@ -99,7 +95,6 @@ int main(int argc, char **argv) {
             Expr *parsed = scheme_parse(&p);
 
             //display_parsed_list(parsed);
-            puts("what is up");
 
             Env env = initializeEnv();
             Compiler(parsed, &env);
@@ -110,9 +105,8 @@ int main(int argc, char **argv) {
 
             fwrite(code_array.code, sizeof(int64_t), code_array.size, fptr);
             free(code_array.code);
-            free(env.val->symbol);
-            free(env.val);
-            printf("updated position is: %d\n", p.pos);
+            free_env(&env);
+            printf("updated position is: %ld\n", p.pos);
 
             
             free_expr(parsed);
@@ -132,9 +126,9 @@ int main(int argc, char **argv) {
 
 Expr* scheme_parse(Parser *p) {
     skip_whitespace(p);
-    puts("in here");
     if (p->pos >= p->length) {
-        return NULL;  // Nothing left to parse
+        printf("Error: invalid expression\n");
+        exit(1);
     }
 
     char c = peek(p);
@@ -161,7 +155,6 @@ Expr* scheme_parse(Parser *p) {
     } else if (c == ';') {
         // comments
         skip_comments(p);
-        puts("comments skipped");
         return scheme_parse(p);
     } else {
         printf("Error: wrong expression '%c' \n", c);
@@ -190,7 +183,6 @@ void Compiler(Expr *parsed, Env *env) {
             break;
         case EXPR_CHAR: // characters
             add_element(&code_array, KEG);
-            puts("in the char");
             // tag the value
             tag_num = tagChar(parsed->as.char_val);
             add_element(&code_array, tag_num);
@@ -220,6 +212,7 @@ void Compiler(Expr *parsed, Env *env) {
             break; 
         default:
             printf("Error: unknown expression type\n");
+            exit(-2);
             break;
     }
 }
@@ -236,6 +229,7 @@ void compile_list(Expr *list, Env *env) {
     Expr *op = list->as.list.items[0];
     if (op->type != EXPR_SYMBOL) {
         printf("Error: expected operator to be a symbol\n");
+        exit(-3);
         return;
     }
 
@@ -275,10 +269,8 @@ void compile_list(Expr *list, Env *env) {
     // Local variables
     } else if(strcmp(op_name, "let") == 0) {
         Env envnew = initializeEnv();
-        puts("1 buck");
         compile_let(list, &envnew);
-        free(envnew.val->symbol);
-        free(envnew.val);
+        free_env(&envnew);
     } else {
         printf("Error: unknown operator '%s'\n", op_name);
         exit(-3);
