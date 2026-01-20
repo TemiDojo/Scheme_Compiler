@@ -87,13 +87,14 @@ int64_t lookup(Env *env, char *symbol);
 // Helper
 void add_to_list(ExprList *list, Expr *item);
 void display_parsed_list(Expr *parsed);
+void free_expr(Expr *parsed);
 
 
 Env initializeEnv() {
     Env env;
     env.count = 0;
     env.capacity = 8;
-    env.val = calloc(code_array.capacity, sizeof(struct Val));
+    env.val = calloc(env.capacity, sizeof(struct Val));
     //env.val[env.count].stack_location = 0;
     return env;
 }
@@ -104,7 +105,7 @@ void add_binding(Env *env, char *symbol, int64_t stack_location) {
         env->val = realloc(env->val, env->capacity * sizeof(struct Val));
         if (env->val == NULL) {
             printf("Error: allocation failure\n");
-            exit(1);
+            exit(-1);
         }
     }
 
@@ -113,13 +114,13 @@ void add_binding(Env *env, char *symbol, int64_t stack_location) {
 
     if (stack_pos != -1) {
         printf("Error: duplicate identifier\n");
-        exit(1);
+        exit(-1);
     }
-
+    printf("TEST: %s\n", symbol);
     env->val[env->count].symbol = calloc(strlen(symbol)+1, sizeof(char));
     if (env->val[env->count].symbol == NULL) {
         printf("Error: allocation failure\n");
-        exit(1);
+        exit(-1);
     }
     strcpy(env->val[env->count].symbol, s1);
     env->val[env->count].stack_location = stack_location;
@@ -152,7 +153,7 @@ void add_to_list(ExprList *list, Expr *item) {
         list->items = realloc(list->items, list->capacity * sizeof(Expr*));
         if (list->items == NULL) {
             printf("Error: allocation failure\n");
-            exit(1);
+            exit(-1);
         }
     }
 
@@ -212,6 +213,33 @@ void display_parsed_list(Expr *parsed) {
 
         default:
             printf("UNKNOWN");
+            break;
+    }
+}
+
+void free_expr(Expr *parsed) {
+    if (parsed == NULL){
+        free(parsed);
+        return;
+    }
+
+    switch (parsed->type) {
+        case EXPR_INT:
+        case EXPR_CHAR:
+        case EXPR_BOOL:
+        case EXPR_SYMBOL:
+            free(parsed);
+            break;
+        case EXPR_LIST:
+            for(size_t i = 0; i < parsed->as.list.count; i++) {
+                free_expr(parsed->as.list.items[i]);
+
+            }
+            free(parsed->as.list.items);
+            free(parsed);
+            break;
+        default:
+            free(parsed);
             break;
     }
 }

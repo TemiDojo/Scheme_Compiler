@@ -53,6 +53,9 @@ char peek(Parser *p) {
 }
 
 char advance(Parser *p) {
+    if (p->pos >= p->length) {
+        return '\0';
+    }
     return p->source[p->pos++];
 }
 
@@ -126,6 +129,11 @@ Expr* parse_char(Parser *p) {
         char c = advance(p);
         list_expr->as.char_val = (int64_t) c;
     }
+    /*
+    if (peek(p) == ';') {
+        skip_comments(p);
+    }
+    */
 
     return list_expr;
 }
@@ -144,6 +152,7 @@ Expr* parse_bool(Parser *p) {
         list_expr->as.bool_val = 0;
     } else {
         printf("Error: expected a boolean\n");
+        exit(-1);
     }
     return list_expr;
 
@@ -157,13 +166,18 @@ Expr* parse_symbol(Parser *p) {
     //char *symbol = malloc(64 *sizeof(char));
     char c = peek(p);
     int i = 0;
-    while(c != '\0' && c != ' ' && c != ')') {
+    while(c != '\0' && c != ' ' && c != '\n' && c != ')' && c != ';') {
+        printf("%c\n", c); 
         list_expr->as.symbol[i] = c;
         i++;
         advance(p);
         c = peek(p);
     }
-    printf("Symbol parsed: %s\n",list_expr->as.symbol);
+    list_expr->as.symbol[i] = '\0';
+    if (c == ';') {
+        skip_comments(p);
+    }
+    //printf("Symbol parsed: %s\n",list_expr->as.symbol);
     // parser not in charge of that
     return list_expr;
 
@@ -181,18 +195,18 @@ Expr* parse_expr(Parser *p) {
 
     while(1) {
         skip_whitespace(p);
-        if (peek(p) == '\0') {
+        if (p->pos >= p->length) { 
             printf("Error: invalid expression, missing ')'");
             exit(1);
         } else if (peek(p) == ')') {
             advance(p); // consume ');
-            printf("%ld", list_expr->as.list.count);
             if (list_expr->as.list.count == 0) {
                 puts("empty list");
             }
             break;
         }
-
+        puts("running schem_parse");
+        printf("... %c\n", peek(p));
         Expr *item = scheme_parse(p);
         add_to_list(&list_expr->as.list, item);
     }

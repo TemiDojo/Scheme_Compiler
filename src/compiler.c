@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
             global_stackPos = -1;
             code_array = initializeInt64_arr();
 
-            printf("expression to parse: %s\n", p.source + p.pos);
+            // printf("expression to parse: %s\n", p.source + p.pos);
             Expr *parsed = scheme_parse(&p);
 
             display_parsed_list(parsed);
@@ -77,8 +77,7 @@ int main(int argc, char **argv) {
             free(code_array.code);
             free(env.val);
             printf("updated position is: %d\n", p.pos);
-
-            free(parsed);
+            free_expr(parsed);
         }
 
 
@@ -95,10 +94,11 @@ int main(int argc, char **argv) {
             global_stackPos = -1;
             code_array = initializeInt64_arr();
 
-            printf("expression to parse: %s\n", p.source);
+            // printf("expression to parse: %s\n", p.source);
             Expr *parsed = scheme_parse(&p);
 
-            display_parsed_list(parsed);
+            //display_parsed_list(parsed);
+            puts("what is up");
 
             Env env = initializeEnv();
             Compiler(parsed, &env);
@@ -113,7 +113,8 @@ int main(int argc, char **argv) {
             printf("updated position is: %d\n", p.pos);
 
             
-            free(parsed);
+            free_expr(parsed);
+            //free(parsed);
         }
 
         free(expr);
@@ -129,7 +130,7 @@ int main(int argc, char **argv) {
 
 Expr* scheme_parse(Parser *p) {
     skip_whitespace(p);
-
+    puts("in here");
     if (p->pos >= p->length) {
         return NULL;  // Nothing left to parse
     }
@@ -158,6 +159,7 @@ Expr* scheme_parse(Parser *p) {
     } else if (c == ';') {
         // comments
         skip_comments(p);
+        puts("comments skipped");
         return scheme_parse(p);
     } else {
         printf("Error: wrong expression '%c' \n", c);
@@ -203,6 +205,7 @@ void Compiler(Expr *parsed, Env *env) {
             int64_t stack_pos = lookup(env, parsed->as.symbol);
             if (stack_pos == -1) {
                 printf("Error: unbound variable: %s\n", parsed->as.symbol);
+                exit(-2);
             } else {
                 add_element(&code_array, KLEG);
                 add_element(&code_array, stack_pos);
@@ -270,9 +273,11 @@ void compile_list(Expr *list, Env *env) {
     // Local variables
     } else if(strcmp(op_name, "let") == 0) {
         Env envnew = initializeEnv();
+        puts("1 buck");
         compile_let(list, &envnew);
     } else {
         printf("Error: unknown operator '%s'\n", op_name);
+        exit(-3);
     }
 }
 
@@ -282,6 +287,7 @@ void compile_list(Expr *list, Env *env) {
 void compile_add1(Expr *list, Env *env) {
     if (list->as.list.count != 2) {
         printf("Error: add1 expects 1 argument\n");
+        exit(-4);
         return;
     }
     Expr *arg = list->as.list.items[1];
@@ -295,6 +301,7 @@ void compile_add1(Expr *list, Env *env) {
 void compile_sub1(Expr *list, Env *env) {
     if (list->as.list.count != 2) {
         printf("Error: sub1 expects 1 argument\n");
+        exit(-4);
         return;
     }
     Expr *arg = list->as.list.items[1];
@@ -308,6 +315,7 @@ void compile_sub1(Expr *list, Env *env) {
 void compile_int2char(Expr *list, Env *env){
     if (list->as.list.count != 2) {
         printf("Error: int2char expects 1 argument\n");
+        exit(-4);
         return;
     }
     Expr *arg = list->as.list.items[1];
@@ -315,11 +323,11 @@ void compile_int2char(Expr *list, Env *env){
     if (arg->type == EXPR_SYMBOL) {
         if (lookup(env, arg->as.symbol) == -1) {
            printf("Error: variable not bound\n"); 
-           return;
+           exit(-4);
         }
     } else if (arg->type != EXPR_INT || arg->type != EXPR_LIST) {
         printf("Error: int2char expects a int\n");
-        return;
+        exit(-4);
     }
 
     // or list epxr that will return int
@@ -331,7 +339,7 @@ void compile_int2char(Expr *list, Env *env){
 void compile_char2int(Expr *list, Env *env) {
     if (list->as.list.count != 2) {
         printf("Error: char2int expects 1 argument\n");
-        return;
+        exit(-4);
     }
     Expr *arg = list->as.list.items[1];
     // check the type in here, only compile char
@@ -344,7 +352,7 @@ void compile_char2int(Expr *list, Env *env) {
 void compile_nullp(Expr *list, Env *env) {
     if (list->as.list.count != 2) {
         printf("Error: nullp expects 1 argument\n");
-        return;
+        exit(-4);
     }
     Expr *arg = list->as.list.items[1];
     Compiler(arg, env);
@@ -355,7 +363,7 @@ void compile_nullp(Expr *list, Env *env) {
 void compile_zerop(Expr *list, Env *env) {
     if (list->as.list.count != 2) {
         printf("Error: zerop expects 1 argument\n");
-        return;
+        exit(-4);
     }
     Expr *arg = list->as.list.items[1];
     Compiler(arg, env);
@@ -366,7 +374,7 @@ void compile_zerop(Expr *list, Env *env) {
 void compile_not(Expr *list, Env *env) {
     if (list->as.list.count != 2) {
         printf("Error: not expects 1 argument\n");
-        return;
+        exit(-4);
     }
     Expr *arg = list->as.list.items[1];
     // check the arg type in here, only compile int
@@ -380,7 +388,7 @@ void compile_not(Expr *list, Env *env) {
 void compile_intp(Expr *list, Env *env) {
     if (list->as.list.count != 2) {
         printf("Error: intp expects 1 argument\n");
-        return;
+        exit(-4);
     }
     Expr *arg = list->as.list.items[1];
     // check the arg type, only compile int or
@@ -393,7 +401,7 @@ void compile_intp(Expr *list, Env *env) {
 void compile_boolp(Expr *list, Env *env) {
     if (list->as.list.count != 2) {
         printf("Error: boolp expects 1 argument\n");
-        return;
+        exit(-4);
     }
     Expr *arg = list->as.list.items[1];
     Compiler(arg, env);
@@ -408,7 +416,7 @@ void compile_boolp(Expr *list, Env *env) {
 void compile_sub(Expr *list, Env *env) {
     if (list->as.list.count != 3) {
         printf("Error: - expects 2 argument\n");
-        return;
+        exit(-5);
     }
     Expr *arg1 = list->as.list.items[2];
     Compiler(arg1, env);
@@ -423,7 +431,7 @@ void compile_sub(Expr *list, Env *env) {
 void compile_add(Expr *list, Env *env) {
     if (list->as.list.count != 3) {
         printf("Error: + expects 2 argument\n");
-        return;
+        exit(-5);
     }
     Expr *arg1 = list->as.list.items[2];
     Compiler(arg1, env);
@@ -445,7 +453,7 @@ void compile_add(Expr *list, Env *env) {
 void compile_mul(Expr *list, Env *env) {
     if (list->as.list.count != 3) {
         printf("Error: * expects 2 argument\n");
-        return;
+        exit(-5);
     }
     Expr *arg1 = list->as.list.items[2];
     Compiler(arg1, env);
@@ -460,7 +468,7 @@ void compile_mul(Expr *list, Env *env) {
 void compile_le(Expr *list, Env *env) {
     if (list->as.list.count != 3) {
         printf("Error: < expects 2 argument\n");
-        return;
+        exit(-5);
     }
     Expr *arg1 = list->as.list.items[2];
     Compiler(arg1, env);
@@ -475,7 +483,7 @@ void compile_le(Expr *list, Env *env) {
 void compile_eq(Expr *list, Env *env) {
     if (list->as.list.count != 3) {
         printf("Error: = expects 2 argument\n");
-        return;
+        exit(-5);
     }
     Expr *arg1 = list->as.list.items[2];
     Compiler(arg1, env);
@@ -491,15 +499,19 @@ void compile_eq(Expr *list, Env *env) {
  * Local variables
  */
 void compile_let(Expr *list, Env *env) {
+    if (list->as.list.count <= 1) {
+        printf("Error: syntax-error: malformed let\n");
+        exit(-6);
+    }
     if (list->as.list.items[1]->as.list.count > 2 || list->as.list.items[1]->as.list.count <= 0) {
         printf("Error: wrong let expression\n");
-        return;
+        exit(-6);
     }
     Expr *arg1 = list->as.list.items[1]; 
     for(size_t i = 0; i < arg1->as.list.count; i++) {
         if (arg1->as.list.items[i]->type != EXPR_LIST) {
             printf("Error: wrong let arg type expression\n");
-            return;
+            exit(-6);
         }
         // evaluate the right most arg
         Expr *arg = arg1->as.list.items[i]->as.list.items[1];
