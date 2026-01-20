@@ -84,6 +84,16 @@ void skip_comments(Parser *p) {
     advance(p); 
 }
 
+void skip_multiline_comments(Parser *p) {
+    advance(p); // consume #
+    advance(p); // consume |
+    while(peek(p) != '|' && advanceN(p) != '#') {
+        advance(p);
+    }
+    advance(p); // consume #
+    advance(p); // consume |
+}
+
 /*
  * Main Parser logic
  *
@@ -126,7 +136,7 @@ Expr* parse_char(Parser *p) {
         p->pos += 5;
     } else {
         char c = advance(p);
-        if (peek(p) == ')' || peek(p) == ';'){
+        if (peek(p) == ')' || peek(p) == ';' || peek(p) == ' ' || peek(p) == '\n'){
             list_expr->as.char_val = (int64_t) c;
         } else {
             printf("Error: invalid char\n");

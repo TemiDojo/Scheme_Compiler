@@ -36,7 +36,7 @@ struct Expr {
         int64_t char_val;       // EXPR_CHAR
         int64_t bool_val;       // EXPR_BOOL
         int64_t mt_list;
-        char symbol[64];        // EXPR_SYMBOL
+        char *symbol;        // EXPR_SYMBOL
         ExprList list;          // EXPR_LIST
     } as;
 };
@@ -96,7 +96,6 @@ Env initializeEnv() {
     env.count = 0;
     env.capacity = 8;
     env.val = calloc(env.capacity, sizeof(struct Val));
-    //env.val[env.count].stack_location = 0;
     return env;
 }
 
@@ -117,7 +116,7 @@ void add_binding(Env *env, char *symbol, int64_t stack_location) {
         printf("Error: duplicate identifier\n");
         exit(-1);
     }
-    printf("TEST: %s\n", symbol);
+
     env->val[env->count].symbol = calloc(strlen(symbol)+1, sizeof(char));
     if (env->val[env->count].symbol == NULL) {
         printf("Error: allocation failure\n");

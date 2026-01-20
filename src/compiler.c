@@ -148,6 +148,9 @@ Expr* scheme_parse(Parser *p) {
         }
     } else if ((c == '#') && (cN == '\\')){     // character
         return parse_char(p);
+    } else if (c == '#' && cN == '|'){
+        skip_multiline_comments(p);
+        return scheme_parse(p);
     } else if (c == '#'){       // Boolean
         return parse_bool(p);
     } else if (is_symbol_start(c)){
@@ -156,7 +159,7 @@ Expr* scheme_parse(Parser *p) {
         // comments
         skip_comments(p);
         return scheme_parse(p);
-    } else {
+    }  else {
         printf("Error: wrong expression '%c' \n", c);
         exit(1);
     }
