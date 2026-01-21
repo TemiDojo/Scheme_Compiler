@@ -27,23 +27,21 @@ Int64_Array stack;
 void interpret();
 void read_word();
 int64_t get_instr();
-void push(int64_t val, size_t *stack_rsp);
-void pop(size_t i, size_t *stack_rsp);
+void push(int64_t val);
+void pop(size_t count);
 void visualize_stack();
 
 
 
-void push(int64_t val, size_t *stack_rsp) {
+void push(int64_t val) {
     add_element(&stack, val);
     //size_t dummy = *stack_rsp;
     //visualize_stack();
-    ++*stack_rsp;
 }
 
-void pop(size_t i, size_t *stack_rsp) {
+void pop(size_t count) {
     //visualize_stack();
-    *stack_rsp-=i;
-    stack.size-=i;
+    stack.size-=count;
 }
 
 int64_t get(size_t index) {

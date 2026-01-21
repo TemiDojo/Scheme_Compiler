@@ -35,6 +35,7 @@ bool isBool(int64_t bools);
 bool isValidType(int64_t val);
 bool is_symbol_char(char c);
 bool is_symbol_start(char c);
+void add_at_index(Int64_Array *code_array, int64_t code, size_t index);
 
 
 
@@ -140,5 +141,28 @@ void add_element(Int64_Array *code_array, int64_t code) {
 
 }
 
+
+void add_at_index(Int64_Array *code_array, int64_t code, size_t index) {
+    if (index > code_array->size) {
+        printf("Error: invalid index\n");
+        exit(-1);
+    }
+
+    /*
+    if (code_array->size >= code_array->capacity) {
+        code_array->capacity = code_array->capacity * 2;
+
+        code_array->code = realloc(code_array->code, code_array->capacity * sizeof(int64_t
+));
+
+        if (code_array->code == NULL) {
+            printf("Error: allocation failure\n");
+            exit(1);
+        }
+    }
+    */
+    code_array->code[index] = code;
+
+}
 
 #endif

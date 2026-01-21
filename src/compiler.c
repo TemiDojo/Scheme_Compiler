@@ -178,6 +178,7 @@ void Compiler(Expr *parsed, Env *env) {
     switch (parsed->type) {
         case EXPR_INT: // integer
             add_element(&code_array, KEG);
+            puts("in the int type");
             // tag the value
             tag_num = tagInt(parsed->as.int_val);
             add_element(&code_array, tag_num);
@@ -204,6 +205,8 @@ void Compiler(Expr *parsed, Env *env) {
                 printf("Error: unbound variable: %s\n", parsed->as.symbol);
                 exit(-2);
             } else {
+
+                printf("found variable : %s\n", parsed->as.symbol);
                 add_element(&code_array, KLEG);
                 add_element(&code_array, stack_pos);
                 stack_pointer++;
@@ -276,7 +279,7 @@ void compile_list(Expr *list, Env *env) {
         free_env(&envnew);
     // conditionals
     } else if(strcmp(op_name, "if") == 0) {
-        compile_if(list, envnew);
+        compile_if(list, env);
     } else {
         printf("Error: unknown operator '%s'\n", op_name);
         exit(-3);
@@ -538,15 +541,35 @@ void compile_if(Expr *list, Env *env) {
         printf("Error: if expects 3 args: test conseq altern\n");
         exit(-7);
     }
+    // Expr *list_expr
     // evaluate the test experssion
     Expr *test = list->as.list.items[1];
     Expr *conseq = list->as.list.items[2];
     Expr *altern = list->as.list.items[3];
+
+
+
+    // emit test bool val
     Compiler(test, env);
-    // emit if equal to #f
-    //compile_eq(
-    // emit if true jump
-    // emit consequent
-    // emit alternate
+    add_element(&code_array, cJEG); // jump opcode
+                                    // 
+    size_t idx = code_array.size;
+    add_element(&code_array, 0); // jump location to l0
+
+
+    // emit l1 label consequent
+    Compiler(conseq, env);
+        // emit jump to end of if
+    add_element(&code_array, JEG); // jump opcode
+    size_t idx2 = code_array.size;
+    add_element(&code_array, 0); // jump location to end of if
+
+    // if false jump to altern
+    int64_t l0_label = code_array.size;
+    Compiler(altern, env);
+    // emit cjump to l0
+    add_at_index(&code_array, l0_label, idx);
+    // emit jump to end of if
+    add_at_index(&code_array, code_array.size, idx2);
 
 }

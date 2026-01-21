@@ -29,7 +29,8 @@ int main(void) {
 }
 
 void interpret() {
-    size_t stack_rsp = 0;
+    size_t jump_loc = 0;
+    int64_t stack_rsp = -1;
     int64_t ret_index = 0;
     int64_t env_diff = 0;
     int64_t res;
@@ -40,16 +41,20 @@ void interpret() {
         switch (get_instr()) {
             // Load Instr
             case KEG:
+                puts("KEG");
                 read_word();
-                push(data, &stack_rsp);
+                push(data);
+                stack_rsp++;
                 break;
             case KLEG:
+                puts("KLEG");
                 read_word(); // read the index
                 int64_t env_pos = data;
                 // get the value
                 int64_t env_val = get(env_pos - env_diff);
                 // push onto the stack
-                push(env_val, &stack_rsp); 
+                push(env_val); 
+                stack_rsp++;
                 break;
                 /*
             case LLEG:
@@ -61,143 +66,190 @@ void interpret() {
             case DEG:
                 // clear the stack
                 env_diff = 0;
-                pop(stack_rsp, &stack_rsp);
+                pop(stack_rsp);
+                stack_rsp-=stack_rsp;
+                break;
+            case cJEG:
+                puts("cJEG");
+                arg1 = get(stack_rsp);
+                //arg1 = 0;
+                read_word();
+                if (isBool(arg1)) {
+                    arg1 = untagBool(arg1);
+                    if (arg1 == 0) {
+                        jump_loc = (data * 8) - (codes_read * 8);
+                        fseek(fp, jump_loc, SEEK_CUR);
+                    } 
+                }
+                break;
+            case JEG:
+                puts("JEG");
+                read_word();
+                jump_loc = (data * 8) - (codes_read * 8);
+                fseek(fp, jump_loc, SEEK_CUR);
 
                 break;
             // Unary Primitives
             case AEG1:  // add1
                 // TODO: check if of type int/valid type
                 // get the arg
-                arg1 = untagInt(get(stack_rsp-1));
-                pop(1, &stack_rsp);
+                arg1 = untagInt(get(stack_rsp));
+                pop(1);
+                stack_rsp--;
                 res = arg1 + 1;
-                push(tagInt(res), &stack_rsp);
-                ret_index = stack_rsp - 1;
+                push(tagInt(res));
+                stack_rsp++;
+                ret_index = stack_rsp;
                 //env_diff++;
                 break;
             case SEG1:  // sub1
                 // TODO: check if of type int/valid type
-                arg1 = untagInt(get(stack_rsp-1));
-                pop(1, &stack_rsp);
+                arg1 = untagInt(get(stack_rsp));
+                pop(1);
+                stack_rsp--;
                 res = arg1 - 1;
-                push(tagInt(res), &stack_rsp);
-                ret_index = stack_rsp - 1;
+                push(tagInt(res));
+                stack_rsp++;
+                ret_index = stack_rsp;
                 //env_diff++;
                 break;
             case CEG:   // char2int
-                arg1 = get(stack_rsp-1);
-                pop(1, &stack_rsp);
+                arg1 = get(stack_rsp);
+                pop(1);
+                stack_rsp--;
                 res = (arg1 >> 6) | INT_TAG;
-                push(res, &stack_rsp);
-                ret_index = stack_rsp - 1;
+                push(res);
+                stack_rsp++;
+                ret_index = stack_rsp;
                 break;
             case IEG:   // int2char 
-                arg1 = get(stack_rsp-1);
-                pop(1, &stack_rsp);
+                arg1 = get(stack_rsp);
+                pop(1);
+                stack_rsp--;
                 res = (arg1 << 6) | CHAR_TAG;
-                push(res, &stack_rsp);
-                ret_index = stack_rsp - 1;
+                push(res);
+                stack_rsp++;
+                ret_index = stack_rsp;
                 break;
             case NEG:   // neg
-                arg1 = untagInt(get(stack_rsp-1));
+                arg1 = untagInt(get(stack_rsp));
                 res = -arg1;
-                push(tagInt(res), &stack_rsp);
-                ret_index = stack_rsp - 1;
+                push(tagInt(res));
+                stack_rsp++;
+                ret_index = stack_rsp;
                 break;
             case sIEG:  // integer?
                 arg1 = get(stack_rsp-1);
-                pop(1, &stack_rsp);
+                pop(1);
+                stack_rsp--;
                 if(isInt(arg1)) {
                     res = (tagBool(1));
                 } else {
                     res = (tagBool(0));
                 }
-                push(res, &stack_rsp);
-                ret_index = stack_rsp - 1;
+                push(res);
+                stack_rsp++;
+                ret_index = stack_rsp;
                 //env_diff++;
                 break;
             case sBEG:  // boolean?
                 arg1 = get(stack_rsp-1);
-                pop(1, &stack_rsp);
+                pop(1);
+                stack_rsp--;
                 if (isBool(arg1)) {
                     res = (tagBool(1));
                 } else {
                     res = (tagBool(0));
                 }
-                push(res, &stack_rsp);
-                ret_index = stack_rsp - 1;
+                push(res);
+                stack_rsp++;
+                ret_index = stack_rsp;
                 //env_diff++;
                 break;
             case ZEG:   // zero?
-                arg1 = untagInt(get(stack_rsp-1));
-                pop(1, &stack_rsp);
+                arg1 = untagInt(get(stack_rsp));
+                pop(1);
+                stack_rsp--;
                 if (arg1 == 0) {
                     res = (tagBool(1));
                 } else {
                     res = (tagBool(0));
                 }
-                push(res, &stack_rsp);
-                ret_index= stack_rsp - 1;
+                push(res);
+                stack_rsp++;
+                ret_index= stack_rsp;
                 break;
             // Binary instr
             case SEG:
                 // TODO: check if of type int/valid type
                 // get the two args
-                arg1 = untagInt(get(stack_rsp-1));
-                arg2 = untagInt(get(stack_rsp-2));
-                pop(2, &stack_rsp);
+                arg1 = untagInt(get(stack_rsp));
+                arg2 = untagInt(get(stack_rsp-1));
+                pop(2);
+                stack_rsp-=2;
                 res = arg1 - arg2;
-                push(tagInt(res), &stack_rsp);
-                ret_index = stack_rsp - 1;
+                push(tagInt(res));
+                stack_rsp++;
+                ret_index = stack_rsp;
                 env_diff++;
                 break;
             case AEG:
+                puts("ADD");
                 // TODO: check if of type int/valid type
                 // get the two args 
-                arg1 = untagInt(get(stack_rsp-1)); // arg1
-                arg2 = untagInt(get(stack_rsp-2));
-                pop(2, &stack_rsp);
+                arg1 = untagInt(get(stack_rsp)); // arg1
+                arg2 = untagInt(get(stack_rsp-1));
+                pop(2);
+                stack_rsp-=2;
                 res = arg1 + arg2;
-                push(tagInt(res), &stack_rsp);
-                ret_index = stack_rsp - 1;
+                push(tagInt(res));
+                stack_rsp++;
+                ret_index = stack_rsp;
                 env_diff++;
                 break;
             case MEG:
                 // TODO: check if its of type int/valid type
-                arg1 = untagInt(get(stack_rsp-1));
-                arg2 = untagInt(get(stack_rsp-2));
-                pop(2, &stack_rsp);
+                arg1 = untagInt(get(stack_rsp));
+                arg2 = untagInt(get(stack_rsp-1));
+                pop(2);
+                stack_rsp-=2;
                 res = arg1 * arg2;
-                push(tagInt(res), &stack_rsp);
-                ret_index = stack_rsp - 1;
+                push(tagInt(res));
+                stack_rsp++;
+                ret_index = stack_rsp;
                 env_diff++;
                 break;
             case LEG:
                 // real number required
-                arg1 = untagInt(get(stack_rsp-1));
-                arg2 = untagInt(get(stack_rsp-2));
-                pop(2, &stack_rsp);
+                arg1 = untagInt(get(stack_rsp));
+                arg2 = untagInt(get(stack_rsp-1));
+                pop(2);
+                stack_rsp-=2;
                 if (arg1 < arg2) {
                     res = (tagBool(1));
                 } else {
                     res = (tagBool(0));
                 }
-                push(res, &stack_rsp);
-                ret_index = stack_rsp - 1;
+                push(res);
+                stack_rsp++;
+                ret_index = stack_rsp;
                 env_diff++;
                 break;
             case EEG:
+                puts("EEG");
                 // real number required 
-                arg1 = untagInt(get(stack_rsp-1));
-                arg2 = untagInt(get(stack_rsp-2));
-                pop(2, &stack_rsp);
+                arg1 = untagInt(get(stack_rsp));
+                arg2 = untagInt(get(stack_rsp-1));
+                pop(2);
+                stack_rsp-=2;
                 if (arg1 == arg2) {
                     res = (tagBool(1));
                 } else {
                     res = (tagBool(0));
                 }
-                push(res, &stack_rsp);
-                ret_index = stack_rsp - 1;
+                push(res);
+                stack_rsp++;
+                ret_index = stack_rsp;
                 env_diff++;
                 break;
             case RET:
