@@ -176,10 +176,25 @@ Expr* parse_symbol(Parser *p) {
     Expr *list_expr = malloc(sizeof(Expr));
     list_expr->type = EXPR_SYMBOL;
 
+    size_t cap = 10;
     //char *symbol = malloc(64 *sizeof(char));
+    list_expr->as.symbol = malloc(cap *sizeof(char));
+    if (list_expr->as.symbol == NULL) {
+        printf("Error: allocation failure\n");
+        exit(-1);
+    }
     char c = peek(p);
-    int i = 0;
+    size_t i = 0;
+
     while(c != '\0' && c != ' ' && c != '\n' && c != ')' && c != ';') {
+        if (cap < i) {
+            cap = cap * 2;
+            list_expr->as.symbol = realloc(list_expr->as.symbol, cap * sizeof(char));
+        }
+        if (list_expr->as.symbol == NULL) {
+            printf("Error: allocation failure\n");
+            exit(-1);
+        }
         list_expr->as.symbol[i] = c;
         i++;
         advance(p);

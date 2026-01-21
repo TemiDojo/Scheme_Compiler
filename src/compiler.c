@@ -274,6 +274,9 @@ void compile_list(Expr *list, Env *env) {
         Env envnew = initializeEnv();
         compile_let(list, &envnew);
         free_env(&envnew);
+    // conditionals
+    } else if(strcmp(op_name, "if") == 0) {
+        compile_if(list, envnew);
     } else {
         printf("Error: unknown operator '%s'\n", op_name);
         exit(-3);
@@ -523,5 +526,27 @@ void compile_let(Expr *list, Env *env) {
        Expr *arg2 = list->as.list.items[i];
        Compiler(arg2, env);
    }
+
+}
+
+/*
+ * Conditionals
+ */
+void compile_if(Expr *list, Env *env) {
+
+    if (list->as.list.count != 4) {
+        printf("Error: if expects 3 args: test conseq altern\n");
+        exit(-7);
+    }
+    // evaluate the test experssion
+    Expr *test = list->as.list.items[1];
+    Expr *conseq = list->as.list.items[2];
+    Expr *altern = list->as.list.items[3];
+    Compiler(test, env);
+    // emit if equal to #f
+    //compile_eq(
+    // emit if true jump
+    // emit consequent
+    // emit alternate
 
 }

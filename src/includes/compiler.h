@@ -80,6 +80,8 @@ void compile_le(Expr *list, Env *env);
 void compile_eq(Expr *list, Env *env);
 // Local variables
 void compile_let(Expr *list, Env *env);
+// conditionals
+void compile_if(Expr *list, Env *env);
 // Env
 Env initializeEnv();
 void add_binding(Env *env, char *symbol, int64_t stack_location);
@@ -227,7 +229,10 @@ void free_expr(Expr *parsed) {
         case EXPR_INT:
         case EXPR_CHAR:
         case EXPR_BOOL:
+            free(parsed);
+            break;
         case EXPR_SYMBOL:
+            free(parsed->as.symbol);
             free(parsed);
             break;
         case EXPR_LIST:
