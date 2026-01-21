@@ -50,8 +50,15 @@ void interpret() {
                 puts("KLEG");
                 read_word(); // read the index
                 int64_t env_pos = data;
+                printf("...%ld\n", data);
+                printf("..diff%ld\n", env_diff);
                 // get the value
-                int64_t env_val = get(env_pos - env_diff);
+                int64_t env_val;
+                if (env_pos <= 0) {
+                    env_val = get(env_diff);
+                } else {
+                    env_val = get(env_pos - env_diff);
+                }
                 // push onto the stack
                 push(env_val); 
                 stack_rsp++;

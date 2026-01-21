@@ -559,7 +559,7 @@ void compile_if(Expr *list, Env *env) {
 
     // emit l1 label consequent
     Compiler(conseq, env);
-        // emit jump to end of if
+    // emit jump to end of if
     add_element(&code_array, JEG); // jump opcode
     size_t idx2 = code_array.size;
     add_element(&code_array, 0); // jump location to end of if
