@@ -60,7 +60,9 @@ int main(int argc, char **argv) {
             code_array = initializeInt64_arr();
 
             // printf("expression to parse: %s\n", p.source + p.pos);
+            puts("*********** BEGIN PARSING ***************");
             Expr *parsed = scheme_parse(&p);
+            puts("*********** PARSING ENDED ***************");
             if (parsed != NULL) {
 
                 display_parsed_list(parsed);
@@ -75,7 +77,7 @@ int main(int argc, char **argv) {
                 fwrite(code_array.code, sizeof(int64_t), code_array.size, fptr);
                 free(code_array.code);
                 free_env(&env);
-                printf("updated position is: %ld\n", p.pos);
+                // printf("updated position is: %ld\n", p.pos);
                 free_expr(parsed);
             }
         }
@@ -95,12 +97,18 @@ int main(int argc, char **argv) {
 
             // printf("expression to parse: %s\n", p.source);
             Expr *parsed = scheme_parse(&p);
-
+                
             //display_parsed_list(parsed);
             if (parsed != NULL) {
+                puts("******** Display Parsed Expression struct ************");
+                display_parsed_list(parsed);
+                puts("******************************************************");
 
                 Env env = initializeEnv();
+
+                puts("******** BEGIN COMPILING *****************************");
                 Compiler(parsed, &env);
+                puts("******** COMPILING ENDED *****************************");
 
                 // emit an instruction after each compiled expression
                 // so we interpreter resets the stack
@@ -109,7 +117,7 @@ int main(int argc, char **argv) {
                 fwrite(code_array.code, sizeof(int64_t), code_array.size, fptr);
                 free(code_array.code);
                 free_env(&env);
-                printf("updated position is: %ld\n", p.pos);
+                // printf("updated position is: %ld\n", p.pos);
 
                 
                 free_expr(parsed);
@@ -181,7 +189,6 @@ void Compiler(Expr *parsed, Env *env) {
     switch (parsed->type) {
         case EXPR_INT: // integer
             add_element(&code_array, KEG);
-            puts("in the int type");
             // tag the value
             tag_num = tagInt(parsed->as.int_val);
             add_element(&code_array, tag_num);
@@ -208,8 +215,6 @@ void Compiler(Expr *parsed, Env *env) {
                 printf("Error: unbound variable: %s\n", parsed->as.symbol);
                 exit(-2);
             } else {
-
-                printf("found variable : %s\n", parsed->as.symbol);
                 add_element(&code_array, KLEG);
                 add_element(&code_array, stack_pos);
                 stack_pointer++;
