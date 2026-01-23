@@ -17,7 +17,7 @@ int main(void) {
     fp = fopen("put.out", "r");
     if (fp == NULL) {
         printf("Error opening file for read\n");
-        return -1;
+        return -2;
     }   
     // Now create a virtual stack to push data
     stack = initializeInt64_arr();
@@ -50,8 +50,6 @@ void interpret() {
                 puts("KLEG");
                 read_word(); // read the index
                 int64_t env_pos = data;
-                printf("...%ld\n", data);
-                printf("..diff%ld\n", env_diff);
                 // get the value
                 int64_t env_val;
                 if (env_pos <= 0) {
@@ -100,6 +98,7 @@ void interpret() {
             case AEG1:  // add1
                 // TODO: check if of type int/valid type
                 // get the arg
+                puts("AEG");
                 arg1 = untagInt(get(stack_rsp));
                 pop(1);
                 stack_rsp--;
@@ -111,6 +110,7 @@ void interpret() {
                 break;
             case SEG1:  // sub1
                 // TODO: check if of type int/valid type
+                puts("SEG1");
                 arg1 = untagInt(get(stack_rsp));
                 pop(1);
                 stack_rsp--;
@@ -121,6 +121,7 @@ void interpret() {
                 //env_diff++;
                 break;
             case CEG:   // char2int
+                puts("CEG");
                 arg1 = get(stack_rsp);
                 pop(1);
                 stack_rsp--;
@@ -130,6 +131,7 @@ void interpret() {
                 ret_index = stack_rsp;
                 break;
             case IEG:   // int2char 
+                puts("IEG");
                 arg1 = get(stack_rsp);
                 pop(1);
                 stack_rsp--;
@@ -139,6 +141,7 @@ void interpret() {
                 ret_index = stack_rsp;
                 break;
             case NEG:   // neg
+                puts("NEG");
                 arg1 = untagInt(get(stack_rsp));
                 res = -arg1;
                 push(tagInt(res));
@@ -146,6 +149,7 @@ void interpret() {
                 ret_index = stack_rsp;
                 break;
             case sIEG:  // integer?
+                puts("sIEG");
                 arg1 = get(stack_rsp-1);
                 pop(1);
                 stack_rsp--;
@@ -160,6 +164,7 @@ void interpret() {
                 //env_diff++;
                 break;
             case sBEG:  // boolean?
+                puts("sBEG");
                 arg1 = get(stack_rsp-1);
                 pop(1);
                 stack_rsp--;
@@ -174,6 +179,7 @@ void interpret() {
                 //env_diff++;
                 break;
             case ZEG:   // zero?
+                puts("ZEG");
                 arg1 = untagInt(get(stack_rsp));
                 pop(1);
                 stack_rsp--;
@@ -190,6 +196,7 @@ void interpret() {
             case SEG:
                 // TODO: check if of type int/valid type
                 // get the two args
+                puts("SEG");
                 arg1 = untagInt(get(stack_rsp));
                 arg2 = untagInt(get(stack_rsp-1));
                 pop(2);
@@ -216,6 +223,7 @@ void interpret() {
                 break;
             case MEG:
                 // TODO: check if its of type int/valid type
+                puts("MEG");
                 arg1 = untagInt(get(stack_rsp));
                 arg2 = untagInt(get(stack_rsp-1));
                 pop(2);
@@ -228,6 +236,7 @@ void interpret() {
                 break;
             case LEG:
                 // real number required
+                puts("LEG");
                 arg1 = untagInt(get(stack_rsp));
                 arg2 = untagInt(get(stack_rsp-1));
                 pop(2);
@@ -265,7 +274,6 @@ void interpret() {
                 printf("RETURN: %ld\n", untagInt(get(ret_index)));
                 stop = true;
             default:
-                puts("default");
                 exit(1);
                 break;
         }

@@ -224,7 +224,7 @@ Expr* parse_expr(Parser *p) {
         skip_whitespace(p);
         if (p->pos >= p->length) { 
             printf("Error: invalid expression, missing ')'");
-            exit(1);
+            exit(-1);
         } else if (peek(p) == ')') {
             advance(p); // consume ');
                         /*

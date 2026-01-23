@@ -62,13 +62,21 @@ int main(int argc, char **argv) {
             // printf("expression to parse: %s\n", p.source + p.pos);
             puts("*********** BEGIN PARSING ***************");
             Expr *parsed = scheme_parse(&p);
+            puts("✓ Sucess");
             puts("*********** PARSING ENDED ***************");
             if (parsed != NULL) {
 
+                puts("******** Display Parsed Expression ******");
                 display_parsed_list(parsed);
+                puts("");
+                puts("*****************************************");
 
                 Env env = initializeEnv();
+
+                puts("******** BEGIN COMPILING ****************");
                 Compiler(parsed, &env);
+                puts("✓ Sucess");
+                puts("******** COMPILING ENDED ****************");
 
                 // emit an instruction after each compiled expression
                 // so we interpreter resets the stack
@@ -95,10 +103,12 @@ int main(int argc, char **argv) {
             global_stackPos = -1;
             code_array = initializeInt64_arr();
 
-            // printf("expression to parse: %s\n", p.source);
+            // printf("expression to parse: %s\n", p.source + p.pos);
+            puts("*********** BEGIN PARSING ***************");
             Expr *parsed = scheme_parse(&p);
+            puts("✓ Sucess");
+            puts("*********** PARSING ENDED ***************");
                 
-            //display_parsed_list(parsed);
             if (parsed != NULL) {
                 puts("******** Display Parsed Expression struct ************");
                 display_parsed_list(parsed);
@@ -108,6 +118,7 @@ int main(int argc, char **argv) {
 
                 puts("******** BEGIN COMPILING *****************************");
                 Compiler(parsed, &env);
+                puts("✓ Sucess");
                 puts("******** COMPILING ENDED *****************************");
 
                 // emit an instruction after each compiled expression
@@ -122,7 +133,6 @@ int main(int argc, char **argv) {
                 
                 free_expr(parsed);
             }
-            //free(parsed);
         }
 
         free(expr);
@@ -172,7 +182,7 @@ Expr* scheme_parse(Parser *p) {
         return scheme_parse(p);
     }  else {
         printf("Error: wrong expression '%c' \n", c);
-        exit(1);
+        exit(-2);
     }
 
 }
@@ -548,7 +558,7 @@ void compile_if(Expr *list, Env *env) {
 
     if (list->as.list.count != 4) {
         printf("Error: if expects 3 args: test conseq altern\n");
-        exit(-7);
+        exit(-6);
     }
     // Expr *list_expr
     // evaluate the test experssion

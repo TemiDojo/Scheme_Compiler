@@ -204,7 +204,7 @@ void display_parsed_list(Expr *parsed) {
             break;
 
         case EXPR_LIST:
-            printf("(");
+            printf("[");
             for (size_t i = 0; i < parsed->as.list.count; i++) {
                 if (i > 0) {
                     printf(" ");  // Space between elements
@@ -212,7 +212,7 @@ void display_parsed_list(Expr *parsed) {
                 // RECURSIVE CALL for each list item
                 display_parsed_list(parsed->as.list.items[i]);
             }
-            printf(")");
+            printf("]");
             break;
 
         default:
@@ -220,6 +220,10 @@ void display_parsed_list(Expr *parsed) {
             break;
     }
 }
+
+/*
+ * Helper functions to free structs
+ */
 
 void free_expr(Expr *parsed) {
     if (parsed == NULL){

@@ -134,7 +134,7 @@ void add_element(Int64_Array *code_array, int64_t code) {
 
         if (code_array->code == NULL) {
             printf("Error: allocation failure\n");
-            exit(1);
+            exit(-1);
         }
     }
     code_array->code[code_array->size++] = code;
