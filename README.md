@@ -57,3 +57,6 @@ Make produces `compile` & `interpret` executables. Pass in your scheme expressio
 Finally to test the interpreter, run `./interpret` (the interpreter already knows the compiler output is in put.out).
 #### Step 4
 wait for the EGciting results
+
+### HOW TO TEST
+_bear with me: TESTS LOADING, after last class it seems like the test has to very structured..._
