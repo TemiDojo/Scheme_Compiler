@@ -52,11 +52,11 @@
 #### Step 1
 JUST RUN `make clean && make`
 #### Step 2
-Make produces `compile` & `interpret` executables. Pass in your scheme expression to `./compile` through either a file (`./compile <file-pathname>`) or the cmd-line (`./compile`). After a successful run it produces and output file called `put.out`. 
+Make produces `compile` & `interpret` executables. Pass in your scheme expression to `./compile` through either a file (`./compile -c <file-pathname> -o <output_filename.out>`) or the cmd-line (`./compile`). After a successful run it produces a output with the default name `put.out` or if the `-o` flag is specified, `<output_filename.out>`. 
 #### Step 3
-Finally to test the interpreter, run `./interpret` (the interpreter already knows the compiler output is in put.out).
+Finally to test the interpreter, run `./interpret <output_filename.out>`.
 #### Step 4
 wait for the EGciting results
 
 ### HOW TO TEST
-_bear with me: TESTS LOADING, after last class it seems like the test has to be very structured..._
+A script called `test.sh` is already provided in the `src` folder. Run the script and it will automatically test all the testcases provided in the test folders with the compiler and interpreter. Additionally, uncomment any lines in the `src/tests/test1` & `src/tests/test2` files, you wish to test and run the test script or test is manually.
