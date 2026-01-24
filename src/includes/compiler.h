@@ -183,31 +183,31 @@ void display_parsed_list(Expr *parsed) {
         case EXPR_CHAR:
             // Print character in Scheme format
             if (parsed->as.char_val == '\n') {
-                printf("#\\newline");
+                printf("\"#\\newline\"");
             } else if (parsed->as.char_val == ' ') {
-                printf("#\\space");
+                printf("\"#\\space\"");
             } else {
-                printf("#\\%c", (char)parsed->as.char_val);
+                printf("\"#\\%c\"", (char)parsed->as.char_val);
             }
             break;
 
         case EXPR_BOOL:
             if (parsed->as.bool_val == 0) {
-                printf("#t");
+                printf("\"#t\"");
             } else {
-                printf("#f");
+                printf("\"#f\"");
             }
             break;
 
         case EXPR_SYMBOL:
-            printf("%s", parsed->as.symbol);
+            printf("\"%s\"", parsed->as.symbol);
             break;
 
         case EXPR_LIST:
             printf("[");
             for (size_t i = 0; i < parsed->as.list.count; i++) {
                 if (i > 0) {
-                    printf(" ");  // Space between elements
+                    printf(", ");  // Space between elements
                 }
                 // RECURSIVE CALL for each list item
                 display_parsed_list(parsed->as.list.items[i]);

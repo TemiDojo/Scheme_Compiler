@@ -1,21 +1,21 @@
 ### ERROR CODES && WHERE TO FIND IF YOU'RE SO LOST:(
 - `-1` 
-    - includes/compiler.h
-    - includes/parser.h
-    - includes/global_helper.h
+    - src/includes/compiler.h
+    - src/includes/parser.h
+    - src/includes/global_helper.h
 - `-2` 
     - scheme_parse(Parser *p)
     - Compiler(Expr *parsed, Env *env)
-    - interpreter.c
+    - src/interpreter.c
 - `-3` 
-    - compile_list(Expr *list, Env *env)
+    - compile_list(Expr *list, Env *env) -> src/compiler.c
 - `-4` 
-    - All unary operators function
+    - All unary operators function -> src/compiler.c
 - `-5` 
-    - Binary operators function
+    - Binary operators function -> src/compiler.c
 - `-6` 
-    - compile_let(Expr *list, Env *env)
-    - compile_if(Expr *list, Env *env)
+    - compile_let(Expr *list, Env *env) -> src/compiler.c
+    - compile_if(Expr *list, Env *env)  -> src/compiler.c
 
 ### ABSURDLYeg COOLeg OPCODEeg &eg TRANSLATIONSeg:)
 ```c

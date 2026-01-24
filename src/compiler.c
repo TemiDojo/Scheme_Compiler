@@ -70,7 +70,6 @@ int main(int argc, char **argv) {
                 puts("******** Display Parsed Expression ******");
                 display_parsed_list(parsed);
                 printf("\n");
-                puts("*****************************************");
 
                 Env env = initializeEnv();
 
