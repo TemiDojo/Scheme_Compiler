@@ -59,4 +59,4 @@ Finally to test the interpreter, run `./interpret` (the interpreter already know
 wait for the EGciting results
 
 ### HOW TO TEST
-_bear with me: TESTS LOADING, after last class it seems like the test has to very structured..._
+_bear with me: TESTS LOADING, after last class it seems like the test has to be very structured..._
