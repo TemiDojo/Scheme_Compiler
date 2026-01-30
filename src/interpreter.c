@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdalign.h>
 #include "./includes/compiler.h"
 #include "./includes/opcodes.h"
 #include "./includes/global_helper.h"
@@ -11,7 +12,7 @@
 
 
 // global ptr
-static int64_t heap[0x1000] = {};
+alignas(8) static char heap[0x1000] = {};
 
 int main(int argc, char **argv) {
 
@@ -86,7 +87,7 @@ void interpret() {
                 printf("RETURN: %c\n", untagChar(get(ret_index)));
                 printf("RETURN: %ld\n", untagInt(get(ret_index)));
                 if (isPair(get(ret_index))) {
-                    int64_t *ptr = (int64_t *)get(ret_index >> 3); 
+                    char *ptr = (char *)get(untagPair(ret_index)); 
                     printf("RETURN: (%ld . %ld)\n", untagInt(ptr[0]), untagInt(ptr[1]));
                 }
 
@@ -254,13 +255,19 @@ void interpret() {
                 
                 arg1 = pop();
                 arg2 = pop();
-                // after we pop we put on the heap
-                int64_t* con_ptr = heap + heap_loc;
-                con_ptr[++heap_loc] = arg1;
-                con_ptr[++heap_loc] = arg2;
+                //4 after we pop we put on the heap
+                printf("checking alignment 0%16x\n", heap);
+                uintptr_t con_ptr = ((uintptr_t)heap);
 
-                // tag the ptr and push on stack
-                push(tagPair((int64_t)con_ptr));
+                ((char *) con_ptr)[++heap_loc] = arg1;
+                ((char *) con_ptr)[++heap_loc] = arg2;
+
+                con_ptr = tagPair(con_ptr);
+
+                if ((con_ptr & 0x7) == 0b001) {
+                    puts("TRUE");
+                }
+                push(con_ptr);
     
 
                 break;

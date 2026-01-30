@@ -26,10 +26,11 @@ typedef struct {
 int64_t tagInt(int64_t integer);
 int64_t tagChar(int64_t chars);
 int64_t tagBool(int64_t bools);
-int64_t tagPair(int64_t ptr);
+uintptr_t tagPair(uintptr_t ptr);
 int64_t untagInt(int64_t integer);
 int64_t untagBool(int64_t bools);
 int64_t untagChar(int64_t chars);
+uintptr_t untagPair(uint64_t ptr);
 bool isInt(int64_t integer);
 bool isChar(int64_t chars);
 bool isBool(int64_t bools);
@@ -76,8 +77,8 @@ int64_t tagBool(int64_t bools) {
     return (bools << 7) | BOOL_TAG;
 }
 
-int64_t tagPair(int64_t ptr) {
-    return (ptr << 3) | PAIR_TAG;
+uintptr_t tagPair(uintptr_t ptr) {
+    return ptr | PAIR_TAG;
 }
 
 
@@ -96,6 +97,10 @@ int64_t untagChar(int64_t chars) {
 
 int64_t untagBool(int64_t bools) {
     return (bools >> 7);
+}
+
+uintptr_t untagPair(uint64_t ptr) {
+    return ptr & PAIR_TAG;
 }
 
 /*
