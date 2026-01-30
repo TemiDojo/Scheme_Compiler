@@ -131,11 +131,13 @@ int main(int argc, char **argv) {
 
         char *expr = NULL;
         size_t len = 0;
-        getline(&expr, &len, stdin);
+        ssize_t char_read = 0;
+        char_read = getline(&expr, &len, stdin);
         
         Parser p = new_parser(expr);
-        p.length = len;
-        while(p.pos < (p.length-1)) {
+        p.length = char_read;
+        while(p.pos < (p.length)) {
+            printf("p.length: %d, p.pos: %d\n", p.length, p.pos);
             global_stackPos = -1;
             code_array = initializeInt64_arr();
 
@@ -337,6 +339,9 @@ void compile_list(Expr *list, Env *env) {
     // conditionals
     } else if(strcmp(op_name, "if") == 0) {
         compile_if(list, env);
+    // Pairs - cons
+    } else if(strcmp(op_name, "cons") == 0) {
+        compile_cons(list, env);
     } else {
         printf("Error: unknown operator '%s'\n", op_name);
         exit(-3);
@@ -565,7 +570,7 @@ void compile_let(Expr *list, Env *env) {
         printf("Error: syntax-error: malformed let\n");
         exit(-6);
     }
-    if (list->as.list.items[1]->as.list.count > 2 || list->as.list.items[1]->as.list.count <= 0) {
+    if (list->as.list.items[1]->as.list.count <= 0) {
         printf("Error: wrong let expression\n");
         exit(-6);
     }
@@ -582,10 +587,16 @@ void compile_let(Expr *list, Env *env) {
         add_binding(env, arg1->as.list.items[i]->as.list.items[0]->as.symbol, global_stackPos);
     }
    // free(env);
-   for(size_t i = 2; i < list->as.list.count; i++) {
+   size_t i;
+   for(i = 2; i < list->as.list.count-1; i++) {
        Expr *arg2 = list->as.list.items[i];
        Compiler(arg2, env);
+       add_element(&code_array, SIKeEG);
    }
+   Expr *arg2 = list->as.list.items[i];
+   Compiler(arg2, env);
+   add_element(&code_array, FLEG);
+   add_element(&code_array, arg1->as.list.count);
 
 }
 
@@ -629,4 +640,24 @@ void compile_if(Expr *list, Env *env) {
     // emit jump to end of if
     add_at_index(&code_array, code_array.size, idx2);
 
+}
+
+/*
+ * Pairs - cons
+ */
+void compile_cons(Expr *list, Env *env) {
+
+    if (list->as.list.count != 3) {
+        printf("Error: cons expects 2 args\n");
+        exit(-7);
+    }
+
+    Expr *arg1 = list->as.list.items[1];
+    Expr *arg2 = list->as.list.items[2];
+
+    Compiler(arg1, env);
+    Compiler(arg2, env);
+
+    // emit cons opcode
+    add_element(&code_array, CONSEG);
 }

@@ -75,6 +75,25 @@ void interpret() {
                 printf("last env: %ld\n", data);
                 break;
                 */
+            case FLEG:
+                puts("FLEG");
+                read_word();
+                // pop the res
+                int64_t dummy_ret = get(stack_rsp);
+                pop(1);
+                stack_rsp--;
+                // clear the env values
+                pop(data);
+                stack_rsp-=data;
+                push(dummy_ret);
+                stack_rsp++;
+                ret_index = stack_rsp;
+                break;
+            case SIKeEG:
+                puts("SIKeEG");
+                pop(1); // pop the res
+                stack_rsp--;
+                break;
             case DEG:
                 // clear the stack
                 printf("RETURN: %c\n", untagChar(get(ret_index)));
@@ -293,6 +312,10 @@ void interpret() {
 void read_word() {
     codes_read += fread(&data, sizeof(int64_t), 1, fp);
 }
+
+// void peek_word() {
+//
+// }
 
 int64_t get_instr() {
 
