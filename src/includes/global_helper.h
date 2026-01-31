@@ -34,7 +34,8 @@ uintptr_t untagPair(uint64_t ptr);
 bool isInt(int64_t integer);
 bool isChar(int64_t chars);
 bool isBool(int64_t bools);
-bool isPair(int64_t ptr);
+bool isPair(intptr_t ptr);
+bool isMtList(int64_t mtlist);
 bool isValidType(int64_t val);
 bool is_symbol_char(char c);
 bool is_symbol_start(char c);
@@ -122,7 +123,11 @@ bool isValidType(int64_t val) {
     return isInt(val) || isChar(val) || isBool(val);
 }
 
-bool isPair(int64_t ptr) {
+bool isMtList(int64_t mtlist) {
+    return mtlist == MT_MASK;
+}
+
+bool isPair(intptr_t ptr) {
     return (ptr & 0b111) == PAIR_TAG;
 }
 

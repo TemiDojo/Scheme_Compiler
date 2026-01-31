@@ -31,22 +31,19 @@ void push(int64_t val);
 void popN(size_t count);
 int64_t pop();
 void visualize_stack();
+int print_res(int64_t res);
 
 
 
 void push(int64_t val) {
     add_element(&stack, val);
-    //size_t dummy = *stack_rsp;
-    //visualize_stack();
 }
 
 void popN(size_t count) {
-    //visualize_stack();
     stack.size-=count;
 }
 
 int64_t pop() {
-    printf("...%d:%d...", stack.size,stack.size-1);
     int64_t retval = stack.code[stack.size-1];
     stack.size--;
     return retval;
@@ -66,5 +63,6 @@ void visualize_stack() {
     printf(BOX_BOTTOM " <- rsp\n");
 
 }
+
 
 #endif
