@@ -47,6 +47,7 @@ void interpret() {
     char* con_ptr = heap;
     char* dum_ptr;
     uintptr_t tag_val;
+    int64_t size;
 
     while (true) {
         switch (get_instr()) {
@@ -314,10 +315,9 @@ void interpret() {
                 }
 
                 // align the ptr first 
-                // if (((uintptr_t)con_ptr) % 8 != 0) {
-                con_ptr = (char *)(((uintptr_t)con_ptr + 7) & ~7);
-                // }
-                printf("string size: %ld", data);
+                if (((uintptr_t)con_ptr) % 8 != 0) {
+                    con_ptr = (char *)(((uintptr_t)con_ptr + 7) & ~7);
+                }
                 memcpy(con_ptr, &data, sizeof(int64_t));
                 con_ptr+=(sizeof(int64_t));
 
@@ -336,16 +336,15 @@ void interpret() {
                 }
                 arg1 = untagInt(arg1);
 
-                int64_t ref_size;
                 ref_ptr = untagStr(ref_ptr);
                 dum_ptr = ((char *) ref_ptr);
                 dum_ptr = dum_ptr - (1 * sizeof(int64_t));
-                memcpy(&ref_size, dum_ptr, sizeof(int64_t));
+                memcpy(&size, dum_ptr, sizeof(int64_t));
                 
-                dum_ptr = dum_ptr - ((ref_size / sizeof(int64_t) + 1) * sizeof(int64_t));
-                dum_ptr += (ref_size-1);
+                dum_ptr = dum_ptr - ((size / sizeof(int64_t) + 1) * sizeof(int64_t));
+                dum_ptr += (size-1);
 
-                for (int i = 0; i < ref_size; i++) {
+                for (int i = 0; i < size; i++) {
                     if (arg1 == i){
                         res = (int64_t) *(dum_ptr);
                         break;
@@ -371,7 +370,6 @@ void interpret() {
                 }
                 arg2 = untagInt(arg2);
                 
-                int64_t sef_size = 0;
                 uintptr_t set_ptr = (uintptr_t)pop();
                 if (!isStr(set_ptr)) {
                     printf("Error: expects a string object\n");
@@ -381,20 +379,21 @@ void interpret() {
 
                 dum_ptr = ((char *) set_ptr);
                 dum_ptr -= (1 * sizeof(int64_t));
-                memcpy(&sef_size, dum_ptr, sizeof(int64_t));
-                if (arg2 >= sef_size) {
+                memcpy(&size, dum_ptr, sizeof(int64_t));
+                if (arg2 >= size) {
                     printf("Error: invalid index to string\n");
                     exit(-2);
                 }
 
-                dum_ptr -= ((3 / sizeof(int64_t) + 1) * sizeof(int64_t));
-                dum_ptr += (3 -1);
+                dum_ptr -= ((size / sizeof(int64_t) + 1) * sizeof(int64_t));
+                dum_ptr += (size -1);
 
-                for (int64_t i = 0; i < sef_size; i++) {
+                for (int64_t i = 0; i < size; i++) {
                     if (arg2 == i) {
                         *dum_ptr = arg1;
                         break;
                     }
+                    dum_ptr--;
                 }
                 set_ptr = (uintptr_t)dum_ptr + ((uintptr_t)set_ptr - (uintptr_t)dum_ptr);
                 push(tagStr(set_ptr));
