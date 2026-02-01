@@ -30,6 +30,7 @@ Expr* parse_char(Parser *p);
 Expr* parse_bool(Parser *p);
 Expr* parse_expr(Parser *p);
 Expr* parse_symbol(Parser *p);
+Expr* parse_string(Parser *p);
 
 
 /*
@@ -131,8 +132,8 @@ Expr* parse_char(Parser *p) {
 
     Expr *list_expr = malloc(sizeof(Expr));
     list_expr->type = EXPR_CHAR;
-    advance(p);
-    advance(p);
+    // advance(p);
+    // advance(p);
     if (strncmp(p->source + p->pos, "newline", 7) == 0) {
         list_expr->as.char_val = (int64_t) '\n';
         p->pos+=7;
@@ -144,7 +145,8 @@ Expr* parse_char(Parser *p) {
         if (peek(p) == ')' || peek(p) == ';' || peek(p) == ' ' || peek(p) == '\n'){
             list_expr->as.char_val = (int64_t) c;
         } else {
-            printf("Error: invalid char\n");
+            puts(" in here");
+            printf("Error: invalid char %c %c\n", peek(p), c);
             exit(-1);
         }
     }
@@ -247,6 +249,42 @@ Expr* parse_expr(Parser *p) {
         add_to_list(&list_expr->as.list, item);
     }
     return list_expr;
+}
+
+Expr* parse_string(Parser *p) {
+    advance(p); // consume '"'
+
+    Expr *list_expr = malloc(sizeof(Expr));
+    list_expr->type = EXPR_LIST;
+    list_expr->as.list.items = malloc(8 * sizeof(Expr*));
+    list_expr->as.list.count = 0;
+    list_expr->as.list.capacity = 8;
+
+    char *val = "string";
+    Parser p_new = new_parser(val);
+    p_new.length = strlen(val);
+    Expr *item1 = parse_symbol(&p_new);
+
+    add_to_list(&list_expr->as.list, item1); 
+
+    while(1) {
+        if (peek(p) == '\"') {
+            break;
+        }
+
+        char expr[3] = {peek(p), ' ', '\0'};
+        p_new = new_parser(expr);
+        p_new.length = strlen(expr);
+
+        Expr *item = parse_char(&p_new);
+        add_to_list(&list_expr->as.list, item);
+        advance(p);
+
+
+    }
+    advance(p); // consume '"'
+    return list_expr;
+
 }
 
 

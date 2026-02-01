@@ -38,5 +38,8 @@
 
 // String
 #define STREG   0x25E5
+#define REFEG   0x26E5
+#define SETEG   0x27E5
+#define APPEG   0x28E5
 
 #endif

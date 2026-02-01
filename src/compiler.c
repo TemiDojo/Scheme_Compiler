@@ -132,12 +132,12 @@ int main(int argc, char **argv) {
         char *expr = NULL;
         size_t len = 0;
         ssize_t char_read = 0;
-        char_read = getline(&expr, &len, stdin);
+        char_read = getdelim(&expr, &len, 0,stdin);
         
         Parser p = new_parser(expr);
         p.length = char_read;
+
         while(p.pos < (p.length)) {
-            printf("p.length: %d, p.pos: %d\n", p.length, p.pos);
             global_stackPos = -1;
             code_array = initializeInt64_arr();
 
@@ -208,6 +208,8 @@ Expr* scheme_parse(Parser *p) {
             return parse_symbol(p);
         }
     } else if ((c == '#') && (cN == '\\')){     // character
+        advance(p);
+        advance(p);
         return parse_char(p);
     } else if (c == '#' && cN == '|'){
         skip_multiline_comments(p);
@@ -220,6 +222,8 @@ Expr* scheme_parse(Parser *p) {
         // comments
         skip_comments(p);
         return scheme_parse(p);
+    } else if (c == '\"') {
+        return parse_string(p);
     }  else {
         printf("Error: wrong expression '%c' \n", c);
         exit(-2);
@@ -350,6 +354,12 @@ void compile_list(Expr *list, Env *env) {
     // String
     } else if (strcmp(op_name, "string") == 0) {
         compile_string(list, env);
+    } else if (strcmp(op_name, "string-ref") == 0) {
+        compile_stringRef(list, env);
+    } else if (strcmp(op_name, "string-set!") == 0) {
+        compile_stringSet(list, env);
+    } else if (strcmp(op_name, "string-append") == 0) {
+        compile_stringAppend(list, env);
     } else {
         printf("Error: unknown operator '%s'\n", op_name);
         exit(-3);
@@ -718,4 +728,58 @@ void compile_string(Expr *list, Env *env) {
     }
     add_element(&code_array, STREG);
     add_element(&code_array, (int64_t)(list->as.list.count -1));
+}
+
+void compile_stringRef(Expr *list, Env *env) {
+
+    if (list->as.list.count != 3) {
+        printf("Error: stringRef expects 2 argument\n");
+        exit(-8);
+    }
+
+    Expr *arg1 = list->as.list.items[1];
+    Expr *arg2 = list->as.list.items[2];
+
+    Compiler(arg1, env);
+    Compiler(arg2, env);
+
+    add_element(&code_array, REFEG);
+
+}
+
+void compile_stringSet(Expr *list, Env *env) {
+
+    if (list->as.list.count != 4) {
+        printf("Error: stringSet expects 3 argument\n");
+        exit(-8);
+    }
+
+    Expr *arg1 = list->as.list.items[1];
+    Expr *arg2 = list->as.list.items[2];
+    Expr *arg3 = list->as.list.items[3];
+
+    Compiler(arg1, env);
+    Compiler(arg2, env);
+    Compiler(arg3, env);
+
+    add_element(&code_array, SETEG);
+
+}
+
+void compile_stringAppend(Expr *list, Env *env) {
+
+    if (list->as.list.count < 2) {
+        printf("Error: invalid args\n");
+        exit(-8);
+    }
+
+    for (size_t i = 1; i < list->as.list.count; i++) {
+        Expr *arg = list->as.list.items[i];
+
+        Compiler(arg, env);
+    }
+
+    add_element(&code_array, APPEG);
+    add_element(&code_array, (int64_t)(list->as.list.count - 1));
+
 }

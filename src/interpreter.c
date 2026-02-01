@@ -45,6 +45,7 @@ void interpret() {
     int64_t arg2;
     bool stop = false;
     char* con_ptr = heap;
+    char* dum_ptr;
     uintptr_t tag_val;
 
     while (true) {
@@ -303,7 +304,7 @@ void interpret() {
                 puts("STREG");
                 read_word(); // read the size of the string
 
-                for(size_t i = 0; i < data; i++) {
+                for(int64_t i = 0; i < data; i++) {
                     int64_t dumChar = pop();
                     if (!isChar(dumChar)) {
                         printf("Error: character required\n");
@@ -313,16 +314,94 @@ void interpret() {
                 }
 
                 // align the ptr first 
-                if (((uintptr_t)con_ptr) % 8 != 0) {
-                    con_ptr = (char *)(((uintptr_t)con_ptr + 7) & ~7);
-                }
+                // if (((uintptr_t)con_ptr) % 8 != 0) {
+                con_ptr = (char *)(((uintptr_t)con_ptr + 7) & ~7);
+                // }
+                printf("string size: %ld", data);
                 memcpy(con_ptr, &data, sizeof(int64_t));
                 con_ptr+=(sizeof(int64_t));
 
-                tag_val = tagStr((uintptr_t) (con_ptr));
+                tag_val = tagStr((uintptr_t) con_ptr);
 
                 push(tag_val);
                 ret_index = stack.size - 1;
+                break;
+            case REFEG:
+                arg1 = pop();
+
+                uintptr_t ref_ptr = (uintptr_t)pop();
+                if (!isInt(arg1)) {
+                    printf("Error: expects int as index\n");
+                    exit(-2);
+                }
+                arg1 = untagInt(arg1);
+
+                int64_t ref_size;
+                ref_ptr = untagStr(ref_ptr);
+                dum_ptr = ((char *) ref_ptr);
+                dum_ptr = dum_ptr - (1 * sizeof(int64_t));
+                memcpy(&ref_size, dum_ptr, sizeof(int64_t));
+                
+                dum_ptr = dum_ptr - ((ref_size / sizeof(int64_t) + 1) * sizeof(int64_t));
+                dum_ptr += (ref_size-1);
+
+                for (int i = 0; i < ref_size; i++) {
+                    if (arg1 == i){
+                        res = (int64_t) *(dum_ptr);
+                        break;
+                    }
+                    dum_ptr--;
+                }
+                push(tagChar(res));
+                ret_index = stack.size - 1;
+
+                break;
+            case SETEG:
+                puts("SETEG");
+                arg1 = pop();
+                if (!isChar(arg1)) {
+                    printf("Error: expects a char\n");
+                    exit(-2);
+                }
+                arg1 = untagChar(arg1);
+                arg2 = pop();
+                if (!isInt(arg2)) {
+                    printf("Error: expects a int\n");
+                    exit(-2);
+                }
+                arg2 = untagInt(arg2);
+                
+                int64_t sef_size = 0;
+                uintptr_t set_ptr = (uintptr_t)pop();
+                if (!isStr(set_ptr)) {
+                    printf("Error: expects a string object\n");
+                    exit(-2);
+                }
+                set_ptr = untagStr(set_ptr);
+
+                dum_ptr = ((char *) set_ptr);
+                dum_ptr -= (1 * sizeof(int64_t));
+                memcpy(&sef_size, dum_ptr, sizeof(int64_t));
+                if (arg2 >= sef_size) {
+                    printf("Error: invalid index to string\n");
+                    exit(-2);
+                }
+
+                dum_ptr -= ((3 / sizeof(int64_t) + 1) * sizeof(int64_t));
+                dum_ptr += (3 -1);
+
+                for (int64_t i = 0; i < sef_size; i++) {
+                    if (arg2 == i) {
+                        *dum_ptr = arg1;
+                        break;
+                    }
+                }
+                set_ptr = (uintptr_t)dum_ptr + ((uintptr_t)set_ptr - (uintptr_t)dum_ptr);
+                push(tagStr(set_ptr));
+                ret_index = stack.size - 1;
+
+                break;
+            case APPEG:
                 break;
             case RET:
                 // TODO: check the type before return
@@ -386,7 +465,7 @@ void print_res(int64_t res){
     if (isInt(res)) {
         printf("%ld", untagInt(res));
     } else if(isChar(res)) {
-        printf("%c", untagChar(res));
+        printf("%c", (char)untagChar(res));
     } else if (isBool(res)) {
         printf("%ld", untagBool(res));
     } else if (isMtList(res)) {
@@ -402,13 +481,11 @@ void print_res(int64_t res){
         ptr = ptr - (1 * sizeof(int64_t));
         memcpy(&str_size, ptr, sizeof(int64_t));
         ptr = ptr - ((str_size / sizeof(int64_t) + 1) * sizeof(int64_t));
-        char str_res[str_size+1] = {};
-
+        ptr += (str_size-1);
         for (int i = 0; i < str_size; i++) {
-            str_res[str_size-(i+1)] = ptr[i];
+            printf("%c", *ptr);
+            ptr--;
         }
-        str_res[str_size] = '\0';
-        printf("%s", str_res);
     }
 }
 
