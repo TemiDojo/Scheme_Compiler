@@ -92,6 +92,8 @@ void compile_string(Expr *list, Env *env);
 void compile_stringRef(Expr *list, Env *env);
 void compile_stringSet(Expr *list, Env *env);
 void compile_stringAppend(Expr *list, Env *env);
+// vector
+void compile_vector(Expr *list, Env *env);
 // Env
 Env initializeEnv();
 void add_binding(Env *env, char *symbol, int64_t stack_location);

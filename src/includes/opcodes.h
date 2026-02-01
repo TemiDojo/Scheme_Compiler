@@ -42,4 +42,8 @@
 #define SETEG   0x27E5
 #define APPEG   0x28E5
 
+// Vector
+#define VECTEG  0x29E5
+
+
 #endif

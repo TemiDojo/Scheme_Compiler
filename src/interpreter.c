@@ -12,7 +12,7 @@
 
 
 // global ptr
-static char heap[0x1000] = {};
+static char heap[0x10000] = {};
 
 int main(int argc, char **argv) {
 
@@ -402,6 +402,26 @@ void interpret() {
                 break;
             case APPEG:
                 break;
+            case VECTEG:
+                puts("VECTEG");
+                read_word();
+
+                for (int64_t i = 0; i < data; i++) {
+                    arg1 = pop();
+                    memcpy(con_ptr, &arg1, sizeof(int64_t));
+                    con_ptr += sizeof(int64_t);
+                }
+                // con_ptr+=sizeof(int64_t);
+                memcpy(con_ptr, &data, sizeof(int64_t));
+
+                con_ptr+=sizeof(int64_t);
+
+                tag_val = tagVec((uintptr_t) con_ptr);
+
+                push(tag_val);
+                ret_index = stack.size - 1;
+
+                break;
             case RET:
                 // TODO: check the type before return
                 //printf("RETURN: %c\n", untagChar(get(ret_index)));
@@ -466,7 +486,11 @@ void print_res(int64_t res){
     } else if(isChar(res)) {
         printf("%c", (char)untagChar(res));
     } else if (isBool(res)) {
-        printf("%ld", untagBool(res));
+        if (untagBool(res) == 0) {
+            printf("#f");
+        } else if (untagBool(res) == 1) {
+            printf("#t");
+        }
     } else if (isMtList(res)) {
         printf("()");
     } else if (isPair((uintptr_t) res)) {
@@ -485,6 +509,26 @@ void print_res(int64_t res){
             printf("%c", *ptr);
             ptr--;
         }
+    } else if (isVec((uintptr_t) res)) {
+        int64_t vec_size;
+        uintptr_t val = untagVec((uintptr_t) res);
+        char *ptr = ((char *) val);
+        ptr = ptr - (1 * sizeof(int64_t));
+        memcpy(&vec_size, ptr, sizeof(int64_t));
+        //ptr = ptr - (vec_size * sizeof(int64_t));
+        ptr-=8;
+        int64_t v_res;
+        printf("#(");
+        for (int i = 0; i < vec_size; i++) {
+            memcpy(&v_res, ptr, sizeof(int64_t));
+            print_res(v_res);
+            if (i != vec_size - 1) {
+                printf(" ");
+            }
+            ptr-=8;
+        }
+        printf(")");
+
     }
 }
 

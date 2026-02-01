@@ -360,6 +360,8 @@ void compile_list(Expr *list, Env *env) {
         compile_stringSet(list, env);
     } else if (strcmp(op_name, "string-append") == 0) {
         compile_stringAppend(list, env);
+    } else if (strcmp(op_name, "vector") == 0) {
+        compile_vector(list, env);
     } else {
         printf("Error: unknown operator '%s'\n", op_name);
         exit(-3);
@@ -780,6 +782,27 @@ void compile_stringAppend(Expr *list, Env *env) {
     }
 
     add_element(&code_array, APPEG);
+    add_element(&code_array, (int64_t)(list->as.list.count - 1));
+
+}
+
+/*
+ *  Vector
+ */
+void compile_vector(Expr *list, Env *env) {
+
+    if (list->as.list.count < 2) {
+        printf("Error: invalid args\n");
+        exit(-9);
+    }
+
+    for (size_t i = 1; i < list->as.list.count; i++) {
+        Expr *arg = list->as.list.items[i];
+
+        Compiler(arg, env);
+    }
+
+    add_element(&code_array, VECTEG);
     add_element(&code_array, (int64_t)(list->as.list.count - 1));
 
 }
