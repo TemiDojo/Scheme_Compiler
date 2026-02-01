@@ -426,13 +426,15 @@ void interpret() {
                 
                 arg1 = pop();
                 if (!isInt(arg1)) {
-
+                    printf("Error: expects an int\n");
+                    exit(-2);
                 }
                 arg1 = untagInt(arg1);
 
                 uintptr_t vref_ptr = pop();
                 if (!isVec(vref_ptr)) {
-
+                    printf("Error: expects a vector\n");
+                    exit(-2);
                 }
                 vref_ptr = untagVec(vref_ptr);
                 dum_ptr = (char *)vref_ptr;
@@ -457,16 +459,16 @@ void interpret() {
                 break;
             case VSETEG:
                 arg1 = pop();
-                if (!isValidType(arg1)) {
-                    
-                }
                 arg2 = pop();
                 if (!isInt(arg2)) {
+                    printf("Error: expects an int\n");
+                    exit(-2);
                 }
 
                 uintptr_t vset_ptr = pop();
                 if (!isVec(vset_ptr)) {
-
+                    printf("Error: expects a vector\n");
+                    exit(-2);
                 }
                 vset_ptr = untagVec(vset_ptr);
                 dum_ptr = (char *)vset_ptr;
@@ -493,12 +495,6 @@ void interpret() {
                 break;
             case RET:
                 // TODO: check the type before return
-                //printf("RETURN: %c\n", untagChar(get(ret_index)));
-                //printf("RETURN: %ld\n", untagInt(get(ret_index)));
-
-
-
-                // after
                 stop = true;
             default:
                 break;
